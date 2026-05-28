@@ -1696,24 +1696,7 @@ async function sendAnswers() {
     submittedAt: new Date().toISOString()
   };
 
-  // GASへ送信（text/plainでプリフライトを回避、タイムアウト付き）
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    await fetch(GAS_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-  } catch (e) {
-    // タイムアウト・エラーでも送信は届いている可能性が高いため、画面は進める
-    console.warn("送信レスポンス取得スキップ:", e.message);
-  }
-
-  // 送信後の遷移（GASのレスポンス有無にかかわらず必ず実行）
+  // ① まず即座に画面遷移（送信より先に実行）
   if (testType === "action") {
     appState.actionSubmittedAt = new Date().toISOString();
     document.getElementById("half-done-title").textContent =
@@ -1722,6 +1705,17 @@ async function sendAnswers() {
   } else {
     appState.philoSubmittedAt = new Date().toISOString();
     showScreen("screen-complete");
+  }
+
+  // ② 画面遷移後にバックグラウンドで送信（画面をブロックしない）
+  try {
+    const encoded = encodeURIComponent(JSON.stringify(payload));
+    fetch(`${GAS_URL}?action=submit&data=${encoded}`, {
+      method: "GET",
+      redirect: "follow"
+    }).catch(e => console.warn("GAS送信エラー:", e));
+  } catch(e) {
+    console.warn("送信スキップ:", e);
   }
 }
 </script>
