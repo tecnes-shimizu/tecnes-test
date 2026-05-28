@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TECNES 人事評価テスト</title>
+<style>
+  :root {
+    --navy: #1F4E79;
+    --navy-light: #2E75B6;
+    --navy-bg: #EBF3FB;
+    --green: #1B5E20;
+    --green-light: #2E7D32;
+    --green-bg: #E8F5E9;
+    --accent: #F57C00;
+    --danger: #C62828;
+    --text: #212121;
+    --text-sub: #555;
+    --border: #BDBDBD;
+    --bg: #F5F5F5;
+    --white: #FFFFFF;
+    --shadow: 0 2px 12px rgba(0,0,0,0.1);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Meiryo', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ヘッダー */
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .header-logo { font-size: 22px; font-weight: 900; letter-spacing: 2px; }
+  .header-title { font-size: 14px; opacity: 0.85; }
+
+  /* メインコンテナ */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+
+  /* カード */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  /* スクリーン管理 */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ローディング */
+  #screen-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid #ddd;
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* エラー画面 */
+  .error-box {
+    background: #FFEBEE;
+    border: 2px solid var(--danger);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+  }
+  .error-box h2 { color: var(--danger); margin-bottom: 12px; }
+
+  /* ウェルカム画面 */
+  .welcome-header {
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    color: white;
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .welcome-name { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
+  .welcome-sub { font-size: 14px; opacity: 0.85; }
+
+  /* 経営基盤ボックス */
+  .philosophy-box {
+    border: 2px solid var(--navy);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .philosophy-box-header {
+    background: var(--navy);
+    color: white;
+    padding: 10px 16px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .philosophy-box-body { padding: 16px; }
+  .philosophy-item { margin-bottom: 14px; }
+  .philosophy-item:last-child { margin-bottom: 0; }
+  .philosophy-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .philosophy-text {
+    font-size: 14px;
+    line-height: 1.6;
+    background: var(--navy-bg);
+    padding: 10px 12px;
+    border-radius: 6px;
+  }
+
+  /* バリュー表 */
+  .value-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .value-table th {
+    background: var(--navy);
+    color: white;
+    padding: 8px 10px;
+    text-align: left;
+  }
+  .value-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .value-table tr:nth-child(even) td { background: var(--navy-bg); }
+
+  /* モットーリスト */
+  .motto-list { list-style: none; padding: 0; }
+  .motto-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+  }
+  .motto-list li::before { content: "▶ "; color: var(--navy); font-size: 11px; }
+  .motto-list li:last-child { border-bottom: none; }
+
+  /* テストセット一覧 */
+  .test-set {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .test-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+  }
+  .test-badge.action { background: #EBF3FB; border-color: var(--navy); }
+  .test-badge.philosophy { background: var(--green-bg); border-color: var(--green); }
+  .test-badge.done { opacity: 0.5; }
+  .test-badge-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 14px; flex-shrink: 0;
+  }
+  .test-badge.action .test-badge-num { background: var(--navy); color: white; }
+  .test-badge.philosophy .test-badge-num { background: var(--green); color: white; }
+  .test-badge-info { flex: 1; }
+  .test-badge-name { font-weight: bold; font-size: 14px; }
+  .test-badge-detail { font-size: 12px; color: var(--text-sub); }
+  .test-badge-status { font-size: 12px; font-weight: bold; }
+  .status-done { color: var(--green); }
+  .status-pending { color: var(--accent); }
+
+  /* 期限バナー */
+  .deadline-banner {
+    background: #FFF8E1;
+    border: 1px solid #F9A825;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  /* ボタン */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-family: inherit;
+    width: 100%;
+  }
+  .btn-navy { background: var(--navy); color: white; }
+  .btn-navy:hover { background: var(--navy-light); }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { background: var(--green-light); }
+  .btn-outline { background: white; color: var(--navy); border: 2px solid var(--navy); }
+  .btn-outline:hover { background: var(--navy-bg); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* テスト画面 */
+  .test-header {
+    padding: 20px 24px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    margin: -24px -24px 24px;
+  }
+  .test-header.navy { background: var(--navy); color: white; }
+  .test-header.green { background: var(--green); color: white; }
+  .test-header h2 { font-size: 16px; margin-bottom: 4px; }
+  .test-header .test-meta { font-size: 12px; opacity: 0.85; }
+
+  /* プログレスバー */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 6px; }
+  .progress-bar { height: 8px; background: #E0E0E0; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .progress-fill.navy { background: var(--navy); }
+  .progress-fill.green { background: var(--green); }
+
+  /* 設問 */
+  .question-block { margin-bottom: 28px; }
+  .question-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .question-tag.navy { background: var(--navy-bg); color: var(--navy); }
+  .question-tag.green { background: var(--green-bg); color: var(--green); }
+
+  .question-num {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text-sub);
+    margin-bottom: 4px;
+  }
+  .question-text {
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  .question-scenario {
+    font-size: 14px;
+    background: #FAFAFA;
+    border-left: 3px solid var(--border);
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border-radius: 0 6px 6px 0;
+    line-height: 1.6;
+  }
+
+  /* 選択肢 */
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .choice-label:hover { border-color: var(--navy-light); background: var(--navy-bg); }
+  .choice-label input[type="radio"] { display: none; }
+  .choice-label.selected.navy { border-color: var(--navy); background: var(--navy-bg); }
+  .choice-label.selected.green { border-color: var(--green); background: var(--green-bg); }
+  .choice-key {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 13px;
+    flex-shrink: 0;
+    background: #eee;
+    color: var(--text-sub);
+    transition: all 0.15s;
+  }
+  .choice-label.selected.navy .choice-key { background: var(--navy); color: white; }
+  .choice-label.selected.green .choice-key { background: var(--green); color: white; }
+
+  /* 記述問題 */
+  .textarea-wrap { position: relative; }
+  .question-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+  .question-textarea:focus { outline: none; border-color: var(--navy); }
+  .question-textarea.green:focus { border-color: var(--green); }
+  .char-count { text-align: right; font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+
+  /* バリデーションエラー */
+  .validate-error { display: none; color: var(--danger); font-size: 13px; margin-top: 4px; }
+  .validate-error.show { display: block; }
+
+  /* セクション区切り */
+  .section-divider {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 13px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* 確認画面 */
+  .confirm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .confirm-table th {
+    background: #F5F5F5;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: bold;
+    width: 100px;
+    border-bottom: 1px solid #eee;
+  }
+  .confirm-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+  }
+  .answer-chip {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: white;
+    text-align: center;
+    line-height: 28px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  .answer-chip.green { background: var(--green); }
+
+  /* 完了画面 */
+  .complete-icon { font-size: 64px; text-align: center; margin-bottom: 16px; }
+  .complete-msg { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+  .complete-sub { text-align: center; font-size: 14px; color: var(--text-sub); }
+
+  /* 途中経過インジケーター */
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 20px;
+  }
+  .step-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    border: 2px solid var(--border);
+    background: white;
+    color: var(--text-sub);
+    position: relative;
+    z-index: 1;
+  }
+  .step-dot.active.navy { background: var(--navy); color: white; border-color: var(--navy); }
+  .step-dot.active.green { background: var(--green); color: white; border-color: var(--green); }
+  .step-dot.done { background: #81C784; color: white; border-color: #81C784; }
+  .step-line { flex: 1; height: 2px; background: var(--border); max-width: 60px; }
+
+  /* レスポンシブ */
+  @media (max-width: 480px) {
+    .container { padding: 12px 12px 48px; }
+    .card { padding: 16px; }
+    .btn { padding: 12px 20px; font-size: 14px; }
+    .welcome-name { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">TECNES</div>
+  <div class="header-title">人事評価テスト</div>
+</header>
+
+<div class="container">
+
+  <!-- ローディング -->
+  <div id="screen-loading" class="screen active">
+    <div class="spinner"></div>
+    <div style="color: var(--text-sub); font-size: 14px;">読み込み中...</div>
+  </div>
+
+  <!-- エラー -->
+  <div id="screen-error" class="screen">
+    <div class="error-box">
+      <h2>⚠ エラー</h2>
+      <p id="error-message">URLが無効か、受験期限が過ぎています。</p>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--text-sub);">ご不明な点は人事担当者にお問い合わせください。</p>
+    </div>
+  </div>
+
+  <!-- ウェルカム -->
+  <div id="screen-welcome" class="screen">
+    <div class="welcome-header">
+      <div class="welcome-name" id="welcome-name">〇〇 さん</div>
+      <div class="welcome-sub">人事評価テストへようこそ</div>
+    </div>
+
+    <!-- 経営基盤 -->
+    <div class="philosophy-box">
+      <div class="philosophy-box-header">📋 TECNESの経営基盤（テスト前にご確認ください）</div>
+      <div class="philosophy-box-body">
+        <div class="philosophy-item">
+          <div class="philosophy-label">経営理念</div>
+          <div class="philosophy-text">我々は工事施工を通じて経済の発展を支えるとともに、世界中の人達に喜びと感動を届け、笑顔溢れる社会を実現します。</div>
+        </div>
+        <div class="philosophy-item">
+          <div class="philosophy-label">ミッション</div>
+          <div class="philosophy-text">「全てはお客様の為に」を一番に考え、我々にしかできない『技術・安全・絆』を追求し、最高の満足を与えるサービスを提供します。</div>
+        </div>
+        <div class="philosophy-item">
+          <div class="philosophy-label">バリュー</div>
+          <table class="value-table">
+            <thead><tr><th>力</th><th>提供する価値</th></tr></thead>
+            <tbody>
+              <tr><td>レベルの高い<strong>技術力</strong></td><td>最高の<strong>品質</strong></td></tr>
+              <tr><td>レベルの高い<strong>安全力</strong></td><td>最高の<strong>安心</strong></td></tr>
+              <tr><td>レベルの高い<strong>組織力</strong></td><td>最高の<strong>信頼</strong></td></tr>
+              <tr><td>レベルの高い<strong>人間力</strong></td><td>最高の<strong>喜び</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="philosophy-item">
+          <div class="philosophy-label">モットー（4つの問い）</div>
+          <ul class="motto-list">
+            <li>我々の仕事はお客様に<strong>喜んでもらえている</strong>か</li>
+            <li>我々の仕事はお客様に<strong>価値を与えている</strong>か</li>
+            <li>我々の仕事はお客様に<strong>また選んでもらえる</strong>か</li>
+            <li>我々の仕事はお客様の<strong>為になっている</strong>か</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 受験するテスト -->
+    <div class="card">
+      <h3 style="margin-bottom: 14px; font-size: 15px;">あなたが受験するテスト</h3>
+      <div class="test-set" id="test-set-list"></div>
+      <div class="deadline-banner">
+        ⏰ 受験期限：<strong id="deadline-display"></strong>
+      </div>
+      <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 16px;">
+        ・各テストは択一8問＋記述2問で構成されています（目安：25〜30分）<br>
+        ・①を完了後、続けて②を受験してください<br>
+        ・送信前に回答を確認できます
+      </p>
+      <button class="btn btn-navy" id="btn-start-action" onclick="startTest('action')">
+        ① 行動確認テストを開始する
+      </button>
+    </div>
+  </div>
+
+  <!-- テスト画面 -->
+  <div id="screen-test" class="screen">
+    <div class="card">
+      <div class="test-header navy" id="test-header-block">
+        <h2 id="test-title-display"></h2>
+        <div class="test-meta" id="test-meta-display"></div>
+      </div>
+
+      <div class="step-indicator" id="step-indicator">
+        <div class="step-dot active navy" id="step1">1</div>
+        <div class="step-line"></div>
+        <div class="step-dot" id="step2">2</div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span id="progress-text">進捗</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill navy" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <div id="questions-container"></div>
+
+      <div style="margin-top: 24px;">
+        <button class="btn btn-navy" id="btn-submit-test" onclick="submitTestForm()">
+          回答を確認する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 確認画面 -->
+  <div id="screen-confirm" class="screen">
+    <div class="card">
+      <h2 style="margin-bottom: 16px; font-size: 16px;" id="confirm-title">回答内容の確認</h2>
+      <p style="font-size: 14px; color: var(--text-sub); margin-bottom: 16px;">以下の内容で送信します。よろしいですか？</p>
+      <div id="confirm-content"></div>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-navy" id="btn-send" onclick="sendAnswers()">送信する</button>
+        <button class="btn btn-outline" onclick="backToTest()">修正する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中間完了（1本目完了） -->
+  <div id="screen-half-done" class="screen">
+    <div class="card" style="text-align: center;">
+      <div style="font-size: 56px; margin-bottom: 16px;">✅</div>
+      <h2 style="font-size: 18px; margin-bottom: 8px;" id="half-done-title">行動確認テストが完了しました</h2>
+      <p style="font-size: 14px; color: var(--text-sub); margin-bottom: 24px;">続けて理念浸透度テストを受験してください。</p>
+      <button class="btn btn-green" onclick="startTest('philosophy')">
+        ② 理念浸透度テストを開始する
+      </button>
+    </div>
+  </div>
+
+  <!-- 完全完了 -->
+  <div id="screen-complete" class="screen">
+    <div class="card">
+      <div class="complete-icon">🎉</div>
+      <div class="complete-msg">テストが完了しました！</div>
+      <div class="complete-sub" style="margin-bottom: 24px;">2本のテストをすべて受験しました。<br>回答は正常に送信されました。</div>
+      <div style="background: var(--navy-bg); border-radius: 8px; padding: 16px; font-size: 14px; color: var(--text-sub);">
+        テスト結果は人事評価面談で活用されます。<br>
+        面談では選択理由や背景について、<br>口頭でお話しいただく場面があります。
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// 設定
+// ============================================================
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz_vAA3EqjhKrwLz_IP3KAv08JZBAZb9MNoMYV3cEuvSalYt9kjr_lZMogytYHtByXFng/exec"; // ← GASをデプロイ後に設定
+
+// ============================================================
+// テストデータ（全6テスト）
+// ============================================================
+const TEST_DATA = {
+
+  // ── 管理職 行動確認テスト ──────────────────────────
+  action_kanri: {
+    title: "管理職 行動確認テスト",
+    color: "navy",
+    tag: "行動確認テスト",
+    questions: [
+      {
+        num: 1, tag: "バリュー：安全力×安心",
+        text: "チームの安全文化をつくる",
+        scenario: "現場で若手社員が「ルーティンだから大丈夫」という意識で安全確認を省略しがちになっている。あなたはリーダーとして何をしますか？",
+        choices: {
+          A: "その場で厳しく注意し、ルールを守るよう指導する。",
+          B: "なぜ安全確認が必要か意味から伝え、チーム全体でKY活動を見直す機会をつくる。",
+          C: "ベテランが見本を見せれば自然と伝わるため、まずは自分が率先して行動する。",
+          D: "安全担当者に対応を一任し、自分は現場の進捗管理に集中する。"
+        }
+      },
+      {
+        num: 2, tag: "バリュー：技術力×品質",
+        text: "品質へのこだわりをチームに根づかせる",
+        scenario: "「工程が押しているから多少の仕上がりは目をつぶろう」というムードがチームに生まれてきた。あなたはどう対応しますか？",
+        choices: {
+          A: "品質を守ることが長期的な信頼につながると伝え、チームと一緒に工程を見直す方法を考える。",
+          B: "納期を優先しつつ、後工程で品質を補完する段取りをとる。",
+          C: "お客様にあらかじめ状況を説明し、了解を得た上で工程を進める。",
+          D: "上司に判断を仰ぎ、指示通りに動く。"
+        }
+      },
+      {
+        num: 3, tag: "バリュー：組織力×信頼",
+        text: "組織を越えた連携で信頼を築く",
+        scenario: "他部署や協力会社との情報共有が不足して、現場でトラブルが発生した。再発防止のためにあなたはどう動きますか？",
+        choices: {
+          A: "トラブルの原因を追及し、責任の所在を明確にする。",
+          B: "自部署のルールを強化し、相手の対応は相手に任せる。",
+          C: "上司に報告して指示を仰ぎ、組織として対応する。",
+          D: "関係者を集め、情報共有の仕組みと連絡ルートを一緒につくり直す。"
+        }
+      },
+      {
+        num: 4, tag: "バリュー：人間力×喜び",
+        text: "部下の人間力を引き出す育成",
+        scenario: "部下が技術的には成長しているが、お客様や協力会社との関係づくりが苦手で、仕事の喜びを感じにくそうにしている。",
+        choices: {
+          A: "具体的な場面を振り返りながら、相手に喜ばれた体験を一緒に掘り起こす対話の機会をつくる。",
+          B: "業務スキルが上がれば自信がついて関係構築も自然にできるようになると考え、技術指導を続ける。",
+          C: "コミュニケーション研修への参加を促す。",
+          D: "苦手な業務は避け、得意な分野で活躍できる場を与える。"
+        }
+      },
+      {
+        num: 5, tag: "モットー：また選んでもらえるか",
+        text: "また選ばれるチームをつくる",
+        scenario: "あるお客様から「次の案件もTECNESに頼みたい」と言っていただいた。この評価を次につなげるためにチームとして何をしますか？",
+        choices: {
+          A: "個人の頑張りを称え、次も同様に取り組むよう励ます。",
+          B: "良かった点を記録して社内に展開し、他のチームにも広げる。",
+          C: "お客様の期待に応えることが自分たちの使命だと伝え、特別な対応はしない。",
+          D: "何が評価されたかをチームで振り返り、それをTECNESの強みとして定着させる仕組みをつくる。"
+        }
+      },
+      {
+        num: 6, tag: "ミッション：全てはお客様の為に",
+        text: "お客様のためになる判断と理念の体現",
+        scenario: "工事中に仕様変更の提案がお客様から来た。対応すると工期が延びるが、お客様にとっては明らかにメリットがある変更だ。",
+        choices: {
+          A: "工期への影響を理由に断り、当初仕様で進める。",
+          B: "上司に相談せず独断で対応し、工期は後から調整する。",
+          C: "上司・関係者と協議した上でお客様に誠実に向き合い、最善の対応策を一緒に考える。",
+          D: "お客様の要望を優先し、まず対応を開始してから上司に報告する。"
+        }
+      },
+      {
+        num: 7, tag: "理念：笑顔溢れる社会を実現する",
+        text: "理念を現場に根づかせるリーダーシップ",
+        scenario: "社員から「理念は言葉としては知っているが、日々の仕事でどう使えばいいか分からない」という声が上がっている。",
+        choices: {
+          A: "理念の暗記テストを実施して、知識の定着を確認する。",
+          B: "朝礼で理念を読み上げる習慣を導入する。",
+          C: "日々の現場での出来事と理念を結びつけて語れるよう、自分が率先して具体的なエピソードを共有する。",
+          D: "理念浸透は人事の仕事だと考え、研修の実施を依頼する。"
+        }
+      },
+      {
+        num: 8, tag: "ミッション：技術・安全・絆",
+        text: "絆を育む組織づくり",
+        scenario: "チームの雰囲気が悪く、社員同士の連携がとれていない。業務はこなしているが「絆」が感じられない状況だ。",
+        choices: {
+          A: "個別面談で不満を聞き出し、問題のある社員に注意する。",
+          B: "業務外の親睦活動を強制的に増やし、関係改善を図る。",
+          C: "共通の目標と役割を改めて共有し、互いの仕事が繋がっていることを体感できる場をつくる。",
+          D: "チームの問題は時間が解決すると考え、様子を見る。"
+        }
+      },
+      {
+        num: 9, tag: "記述：理念・バリュー", type: "text",
+        text: "理念をチームに根づかせた実体験（記述）",
+        scenario: "これまでの仕事の中で、TECNESの理念・バリュー・モットーをチームや後輩に伝えた・体現した経験を具体的に教えてください。"
+      },
+      {
+        num: 10, tag: "記述：社名の想い", type: "text",
+        text: "TECNESのリーダーとして目指す姿（記述）",
+        scenario: "「技術でつなぎ、つないだものを支え、未来を創る」というTECNESの想いを踏まえて、あなたがリーダーとして目指す姿・大切にしたいことを書いてください。"
+      }
+    ]
+  },
+
+  // ── 中堅社員 行動確認テスト ──────────────────────────
+  action_chuken: {
+    title: "中堅社員 行動確認テスト",
+    color: "navy",
+    tag: "行動確認テスト",
+    questions: [
+      {
+        num: 1, tag: "バリュー：技術力×品質",
+        text: "現場での品質へのこだわり",
+        scenario: "作業中に「この仕上がりで問題ないだろう」と感じる場面があった。しかし何か気になっている。あなたはどうしますか？",
+        choices: {
+          A: "気になった点は上司に報告してから動く。自分の判断ではやり直さない。",
+          B: "工程を優先し、最終検査で問題が出なければよしとする。",
+          C: "自分の「気になる」という感覚を大切にし、仕様・基準を確認した上で必要であればやり直す。",
+          D: "協力会社に確認してもらい、判断を任せる。"
+        }
+      },
+      {
+        num: 2, tag: "バリュー：安全力×安心",
+        text: "安全を自分ごとにする行動",
+        scenario: "ベテランの先輩が「このくらいなら安全帯なしでも大丈夫」と言いながら作業している場面を目撃した。",
+        choices: {
+          A: "先輩に対しても声をかけ、安全ルールの重要性をしっかり伝える。",
+          B: "先輩の判断を尊重し、自分はルールを守りつつ何も言わない。",
+          C: "後で上司に報告するが、その場では何もしない。",
+          D: "現場の慣例に従い、自分もそれに合わせる。"
+        }
+      },
+      {
+        num: 3, tag: "バリュー：組織力×信頼",
+        text: "チームの信頼をつなぐ橋渡し役",
+        scenario: "若手社員と管理職の間で認識のズレが生まれており、若手が「言いにくい」と感じている。あなたはどう行動しますか？",
+        choices: {
+          A: "自分の仕事に集中し、組織の問題には関与しない。",
+          B: "若手の意見を管理職に直接伝え、一方的に解決しようとする。",
+          C: "両者の話を丁寧に聞き、互いの意図を橋渡ししてコミュニケーションを整える。",
+          D: "問題が表面化してから上司に相談する。"
+        }
+      },
+      {
+        num: 4, tag: "バリュー：人間力×喜び",
+        text: "後輩の喜びを引き出す先輩像",
+        scenario: "後輩が仕事に自信をなくしており、ミスを過度に気にしている様子だ。あなたはどう関わりますか？",
+        choices: {
+          A: "ミスの原因を一緒に分析し、改善策を考えるよう促す。",
+          B: "「気にしすぎるな」と励ますが、特に具体的なアドバイスはしない。",
+          C: "厳しく指導し、自分で乗り越えさせる。",
+          D: "後輩が「できた」と感じられた体験を一緒に振り返り、強みや成長を具体的に伝える。"
+        }
+      },
+      {
+        num: 5, tag: "モットー：また選んでもらえるか",
+        text: "お客様にまた選ばれる仕事とは",
+        scenario: "工事終了後、お客様から「仕上がりは良かったが、途中の説明が少なかった」というフィードバックをもらった。",
+        choices: {
+          A: "品質に問題がなかったので、特に対応は不要だと考える。",
+          B: "上司に報告し、対応は会社に任せる。",
+          C: "次回から説明を増やすことを心がけるが、今回の案件については特に何もしない。",
+          D: "今回のフィードバックを真摯に受け止め、次の現場から報告・説明のタイミングと方法を改善する。"
+        }
+      },
+      {
+        num: 6, tag: "モットー：お客様に価値を与えているか",
+        text: "お客様への価値を自分の言葉で語る",
+        scenario: "後輩から「自分の仕事がお客様にどう役立っているか実感がわかない」と相談された。あなたはどう答えますか？",
+        choices: {
+          A: "「給料をもらっているのだから真剣にやるのは当然だ」と伝える。",
+          B: "「技術を高めれば自然とわかってくる」と励ます。",
+          C: "「上司に聞いてみよう」とその場をやり過ごす。",
+          D: "自分が感じたお客様への価値や喜ばれた体験を具体的に話し、後輩が自分ごととして考えるきっかけをつくる。"
+        }
+      },
+      {
+        num: 7, tag: "ミッション：技術・安全・絆",
+        text: "絆をつくる協力会社・他部署との関わり",
+        scenario: "協力会社のスタッフが「自分たちは指示を受けるだけ」と感じて意欲が低下している様子だ。",
+        choices: {
+          A: "協力会社のモチベーションは自社の問題であり、特に介入しない。",
+          B: "上司に報告し、対応を一任する。",
+          C: "協力会社のスタッフにも仕事の意義と目的を伝え、一緒に現場をつくる関係を意識して関わる。",
+          D: "作業指示を明確にして効率を高めることで解決しようとする。"
+        }
+      },
+      {
+        num: 8, tag: "ミッション：全てはお客様の為に",
+        text: "ミッションを日常の判断に活かす",
+        scenario: "作業中、手順書にない状況が発生した。上司はその場にいない。どう判断しますか？",
+        choices: {
+          A: "手順書にない状況は作業を止めて待機し、何も判断しない。",
+          B: "「全てはお客様の為に」という判断軸をもとに上司に状況を報告・相談し、最善の対処を確認してから動く。",
+          C: "自分の経験で判断し、最善と思う方法で作業を進める。",
+          D: "協力会社のベテランに判断を委ねる。"
+        }
+      },
+      {
+        num: 9, tag: "記述：理念", type: "text",
+        text: "自分の仕事と社会への貢献（記述）",
+        scenario: "あなたの日々の仕事が、お客様や社会にどのようにつながっていると感じますか？具体的なエピソードを交えて書いてください。"
+      },
+      {
+        num: 10, tag: "記述：社名の想い", type: "text",
+        text: "TECNESの一員としての誇り（記述）",
+        scenario: "「技術でつなぎ、つないだものを支え、未来を創る」というTECNESの想いを踏まえて、あなたがTECNESの一員として大切にしていること・誇りに感じていることを書いてください。"
+      }
+    ]
+  },
+
+  // ── 若手社員 行動確認テスト ──────────────────────────
+  action_wakate: {
+    title: "若手社員 行動確認テスト",
+    color: "navy",
+    tag: "行動確認テスト",
+    questions: [
+      {
+        num: 1, tag: "バリュー：技術力×品質",
+        text: "品質を守る基本行動",
+        scenario: "作業中に「これで合っているかな？」と不安になった。先輩はその場にいない。あなたはどうしますか？",
+        choices: {
+          A: "自分の判断で進め、問題があれば後で対処する。",
+          B: "わからないまま作業を続け、検査で指摘されてから修正する。",
+          C: "先輩や上司に確認してから作業を進める。わからないことを確認するのは正しい行動だと理解している。",
+          D: "協力会社の人に聞いて判断してもらう。"
+        }
+      },
+      {
+        num: 2, tag: "バリュー：安全力×安心",
+        text: "安全ルールを自分の言葉で理解する",
+        scenario: "新しい現場に入った初日。安全ルールの説明を受けたが、なぜそのルールがあるか理由がよくわからなかった。",
+        choices: {
+          A: "とりあえずルールを守ればいいので、理由は特に気にしない。",
+          B: "ルールの意味を先輩や上司に質問し、なぜ必要かを自分の言葉で理解する。",
+          C: "他の人がやっていることを観察して、それに合わせる。",
+          D: "マニュアルを読んで覚えれば十分と考える。"
+        }
+      },
+      {
+        num: 3, tag: "バリュー：組織力×信頼",
+        text: "チームの一員として信頼を積む",
+        scenario: "先輩から頼まれた作業が予定より早く終わった。次の指示をもらうまで何をしますか？",
+        choices: {
+          A: "指示があるまで待機する。",
+          B: "自分で次の作業を勝手に始める。",
+          C: "スマートフォンを見て待つ。",
+          D: "先輩に「終わりました。次に何か手伝えることはありますか？」と声をかける。"
+        }
+      },
+      {
+        num: 4, tag: "バリュー：人間力×喜び",
+        text: "人間力で喜ばれる仕事をする",
+        scenario: "お客様が現場を見学に来た。先輩は別の場所で作業中で、あなた一人でお客様と向き合う場面になった。",
+        choices: {
+          A: "「先輩を呼びます」とだけ言い、その場を離れる。",
+          B: "お客様を無視して作業を続ける。",
+          C: "笑顔で挨拶し、自分の担当範囲を簡潔に説明した上で先輩を呼びに行く。",
+          D: "詳しいことは分からないので何も話さず、先輩が来るまで黙っている。"
+        }
+      },
+      {
+        num: 5, tag: "モットー：お客様に喜んでもらえているか",
+        text: "お客様に喜んでもらえているか",
+        scenario: "工事完了後、お客様から「ありがとう、きれいにしてくれたね」と声をかけてもらった。どう受け取りますか？",
+        choices: {
+          A: "嬉しいが、お世辞だと思って特に気にしない。",
+          B: "「お客様に喜んでもらえた」ということを自分の仕事の手ごたえとして大切にし、次の仕事への意欲につなげる。",
+          C: "褒められたことを先輩に自慢する。",
+          D: "たまたまうまくいっただけだと考え、深く受け止めない。"
+        }
+      },
+      {
+        num: 6, tag: "モットー：また選んでもらえるか",
+        text: "また選ばれる若手を目指す",
+        scenario: "先輩から「お客様にまた来てほしいと思ってもらえる仕事をしろ」と言われた。具体的に何を意識しますか？",
+        choices: {
+          A: "技術を磨けば自然とそうなると考え、技術習得だけに集中する。",
+          B: "丁寧な挨拶・返事・報連相など、基本的な行動を徹底して信頼を積み重ねる。",
+          C: "お客様に積極的に話しかけてアピールする。",
+          D: "先輩の言うことを機械的に守れば評価されると考える。"
+        }
+      },
+      {
+        num: 7, tag: "モットー：お客様の為になっているか",
+        text: "お客様の為になる行動を選ぶ",
+        scenario: "作業中に、お客様の設備に軽微な傷をつけてしまったことに気づいた。先輩はいない。どうしますか？",
+        choices: {
+          A: "目立たないのでそのままにしておく。",
+          B: "自分で直そうと試みる。",
+          C: "すぐに先輩・上司に報告し、お客様への適切な対応を相談する。",
+          D: "工事が終わってから報告する。"
+        }
+      },
+      {
+        num: 8, tag: "ミッション・理念",
+        text: "TECNESの仕事の意味を感じる",
+        scenario: "「自分のやっている仕事が社会にどうつながるのかわからない」と感じることがある。このとき、あなたはどう考えますか？",
+        choices: {
+          A: "若いうちは意味を考えず、とにかく指示通りに動くことが大事だと割り切る。",
+          B: "先輩や上司に「自分の仕事はどこにつながっているか」を聞いてみる。",
+          C: "仕事の完成形や、それを使うお客様・地域の人々の姿を意識しながら作業するよう心がける。",
+          D: "自分の役割が小さいのは仕方ないと考え、あまり気にしない。"
+        }
+      },
+      {
+        num: 9, tag: "記述：モットー・理念", type: "text",
+        text: "仕事でお客様に喜ばれた瞬間（記述）",
+        scenario: "仕事の中で、お客様や周囲の人に「ありがとう」「助かった」と感じてもらえた瞬間があれば、具体的に書いてください。まだそのような経験がない場合は、これからどんな場面でお客様に喜んでもらいたいかを書いてください。"
+      },
+      {
+        num: 10, tag: "記述：社名の想い", type: "text",
+        text: "自分がTECNESで目指す姿（記述）",
+        scenario: "「技術でつなぎ、つないだものを支え、未来を創る」というTECNESの想いを踏まえて、あなたがこれからTECNESでどんな社員を目指したいかを書いてください。"
+      }
+    ]
+  },
+
+  // ── 事務職 行動確認テスト ──────────────────────────
+  action_jimu: {
+    title: "事務職 行動確認テスト",
+    color: "navy",
+    tag: "行動確認テスト",
+    questions: [
+      {
+        num: 1, tag: "バリュー：技術力×品質",
+        text: "事務の正確さが仕事の品質をつくる",
+        scenario: "請求書を作成中、数字に少し迷いが生じた。締め切りまであまり時間がない。あなたはどうしますか？",
+        choices: {
+          A: "時間が迫っているので、そのまま送信して後で確認する。",
+          B: "一度立ち止まり、元データと照合してから送信する。",
+          C: "上司に代わりに確認してもらうよう頼む。",
+          D: "迷ったまま提出し、指摘があれば修正する。"
+        }
+      },
+      {
+        num: 2, tag: "バリュー：安全力×安心",
+        text: "ミスゼロへの意識と報連相",
+        scenario: "書類を送付した後、誤記があることに気づいた。相手先にはまだ確認されていない可能性がある。",
+        choices: {
+          A: "相手から指摘されるまで様子を見る。",
+          B: "自分で解決できると考え、こっそり差し替えだけ行う。",
+          C: "すぐに上司に報告し、相手先への対応を一緒に確認する。",
+          D: "なかったことにする。"
+        }
+      },
+      {
+        num: 3, tag: "バリュー：組織力×信頼",
+        text: "縁の下の連携力で現場を支える",
+        scenario: "現場から急ぎの書類依頼が来た。しかし自分は別の締め切りが迫っている業務を抱えている。",
+        choices: {
+          A: "自分の業務を優先し、現場の依頼は後回しにする。",
+          B: "現場の依頼を最優先にして、自分の業務は諦める。",
+          C: "状況を上司に共有し、優先順位の判断を仰いだ上で対応する。",
+          D: "どちらも中途半端に対応し、両方の品質を下げる。"
+        }
+      },
+      {
+        num: 4, tag: "バリュー：人間力×喜び",
+        text: "先回りの気配りで喜ばれる事務へ",
+        scenario: "担当者から「いつもありがとう」と言われることが増えてきた。どう受け止め、次にどう活かしますか？",
+        choices: {
+          A: "嬉しいが、特に変わらず普段通りに仕事をする。",
+          B: "感謝される理由を自分なりに振り返り、さらに相手が助かることを先回りして考えるようになる。",
+          C: "褒められたことを周囲に話してモチベーションを高める。",
+          D: "慣れてきたので手を抜いても大丈夫と感じ始める。"
+        }
+      },
+      {
+        num: 5, tag: "モットー：お客様に喜ばれているか",
+        text: "電話・メール対応でお客様の喜びをつくる",
+        scenario: "お客様から問い合わせ電話が来たが、担当者が外出中で詳しいことは答えられない。",
+        choices: {
+          A: "「担当が不在です」とだけ伝えて電話を切る。",
+          B: "「折り返し連絡します」と伝え、担当者に状況をきちんと引き継ぐ。",
+          C: "知っている範囲で回答し、わからない部分は「わかりません」と答える。",
+          D: "別の担当者に勝手に転送する。"
+        }
+      },
+      {
+        num: 6, tag: "モットー：また選んでもらえるか",
+        text: "また選ばれる会社を支える事務の姿勢",
+        scenario: "外部の協力会社から「TECNESさんの事務対応は丁寧で信頼できる」と言われた。",
+        choices: {
+          A: "褒められて嬉しいが、特に意識は変えない。",
+          B: "自分だけでなくTECNES全体の印象を支えているという自覚を持ち、丁寧な対応を継続・改善する。",
+          C: "自分の評価が高まったと感じ、上司に報告してアピールする。",
+          D: "たまたまうまくいっただけで、再現性はないと考える。"
+        }
+      },
+      {
+        num: 7, tag: "ミッション：技術・安全・絆",
+        text: "社内外の絆をつなぐコミュニケーション",
+        scenario: "現場社員と事務職の間で情報の行き違いが起きており、双方から不満の声が出ている。",
+        choices: {
+          A: "自分の業務範囲ではないので関わらない。",
+          B: "どちらか一方の意見を上司に伝えて解決を求める。",
+          C: "双方の状況を丁寧にヒアリングし、情報共有の方法を改善する提案を行う。",
+          D: "問題が大きくなるまで静観する。"
+        }
+      },
+      {
+        num: 8, tag: "理念：笑顔溢れる社会を実現する",
+        text: "理念を事務の日常で体現する",
+        scenario: "「事務職は直接お客様と接しないから、理念は現場の人のものだ」と感じることがある。",
+        choices: {
+          A: "その通りだと思い、理念は自分には関係ないと割り切る。",
+          B: "上司から言われた通りに動けば理念を体現していると考える。",
+          C: "正確な書類・丁寧な対応・迅速な連携が現場を支え、お客様の満足につながっていることを意識して仕事をする。",
+          D: "理念研修が必要だと感じ、参加の機会を待つ。"
+        }
+      },
+      {
+        num: 9, tag: "記述：理念", type: "text",
+        text: "自分の仕事がお客様・社会につながった実感（記述）",
+        scenario: "あなたの日々の事務業務が、お客様や現場、社会にどのようにつながっていると感じますか？具体的な場面を思い浮かべながら書いてください。"
+      },
+      {
+        num: 10, tag: "記述：社名の想い", type: "text",
+        text: "支える存在としての誇りと自分らしい貢献（記述）",
+        scenario: "「暮らしや産業を支える存在」というTECNESの想いを踏まえて、事務職として自分がどのように会社・現場・お客様を支えていきたいかを書いてください。"
+      }
+    ]
+  },
+
+  // ── 理念浸透度テスト 現場版 ──────────────────────────
+  philosophy_genba: {
+    title: "理念浸透度確認テスト（現場版）",
+    color: "green",
+    tag: "理念浸透度テスト",
+    questions: [
+      {
+        num: 1, tag: "バリュー：技術力×品質",
+        text: "品質が信頼の源泉",
+        scenario: "「品質を高めることがお客様の信頼につながる」という考えについて、最もTECNESらしい行動はどれですか？",
+        choices: {
+          A: "検査に合格することを最低限の目標とし、それ以上は求めない。",
+          B: "コストと工期のバランスを最優先に考え、品質は二の次にする。",
+          C: "「この仕上がりでお客様は本当に満足されるか」を常に自問しながら作業する。",
+          D: "品質の判断は検査員に任せ、自分は指示された作業だけを行う。"
+        }
+      },
+      {
+        num: 2, tag: "バリュー：安全力×安心",
+        text: "安全力とは想像力と注意力",
+        scenario: "TECNESが大切にする「安全力」とは何か。最も本質をついた説明はどれですか？",
+        choices: {
+          A: "ルールを守ることだけが安全であり、マニュアルの遵守が全て。",
+          B: "「もしこうなったら」と先を想像し、危険の芽を摘む意識と行動力。",
+          C: "事故が起きた後に適切に対処できる能力。",
+          D: "上司の指示に従い、自分では判断しないこと。"
+        }
+      },
+      {
+        num: 3, tag: "バリュー：組織力×信頼",
+        text: "自分が動く組織力",
+        scenario: "チームで作業中、誰もが気づいているが誰も動いていない問題がある。組織力を発揮するとはどういう行動ですか？",
+        choices: {
+          A: "上司が気づくまで様子を見る。",
+          B: "問題を記録して報告書にまとめる。",
+          C: "他の誰かが動くだろうと思い、自分は動かない。",
+          D: "自分が最初に動き、周囲に声をかけ一緒に解決する。"
+        }
+      },
+      {
+        num: 4, tag: "バリュー：人間力×喜び",
+        text: "気づく力・思いやりで喜びを生む",
+        scenario: "「人間力」とは何か。TECNESの価値観に最も近い説明はどれですか？",
+        choices: {
+          A: "社交的で話し上手であること。",
+          B: "勤続年数が長く経験豊富であること。",
+          C: "相手の気持ちや状況に気づき、自分から動いて相手を喜ばせられること。",
+          D: "自分の仕事を完璧にこなし、ミスをしないこと。"
+        }
+      },
+      {
+        num: 5, tag: "モットー（4問統合）",
+        text: "モットーの4つの問いに向き合う",
+        scenario: "TECNESのモットーである4つの問い（喜んでもらえているか・価値を与えているか・また選ばれるか・為になっているか）を最もよく体現している行動はどれですか？",
+        choices: {
+          A: "仕事が終わったらすぐに次の現場に移り、効率を重視する。",
+          B: "仕事が完了した後、お客様の反応や評価を気にかけ、自分の行動を振り返る。",
+          C: "お客様に言われたことだけを忠実にこなし、余計な提案はしない。",
+          D: "評価は上司がするものと考え、自分では気にしない。"
+        }
+      },
+      {
+        num: 6, tag: "モットー：また選んでもらえるか",
+        text: "また選ばれる現場をつくる",
+        scenario: "「お客様からの評価こそが最大の営業活動である」というモットーの意味として、最も正確な理解はどれですか？",
+        choices: {
+          A: "営業部門の仕事をサポートすることが現場の役割だ。",
+          B: "良い仕事をすることで口コミや再発注につながり、それが最高の営業になるということ。",
+          C: "お客様に積極的に営業トークをすることが現場社員の義務だ。",
+          D: "価格競争に勝つことが最優先の課題だ。"
+        }
+      },
+      {
+        num: 7, tag: "ミッション：技術・安全・絆",
+        text: "絆 ── 協力会社・地域との関係",
+        scenario: "ミッションにある「絆」とは何か。TECNESの考え方に最も近いものはどれですか？",
+        choices: {
+          A: "社内の仲間同士の親密な関係だけを指す。",
+          B: "長年の取引実績があるパートナーへの義理と人情。",
+          C: "協力会社・地域・お客様すべてとの信頼を基盤とした長期的なつながり。",
+          D: "飲み会などのコミュニケーション活動で生まれるもの。"
+        }
+      },
+      {
+        num: 8, tag: "理念：笑顔溢れる社会を実現する",
+        text: "理念が生きた瞬間を自分で語る",
+        scenario: "TECNESの経営理念「笑顔溢れる社会を実現する」が現場で体現されている瞬間として、最も適切な例はどれですか？",
+        choices: {
+          A: "工事が予定通り完了したとき。",
+          B: "安全事故がゼロだったとき。",
+          C: "ノルマを達成して会社の売上に貢献できたとき。",
+          D: "工事完了後にお客様から「これで安心して暮らせます」と笑顔で言ってもらえたとき。"
+        }
+      },
+      {
+        num: 9, tag: "記述：理念", type: "text",
+        text: "TECNESの仕事が社会につながる実感（記述）",
+        scenario: "あなたの仕事が地域や社会とどのようにつながっていると感じますか？日々の現場での経験を踏まえて、具体的に書いてください。"
+      },
+      {
+        num: 10, tag: "記述：社名の想い", type: "text",
+        text: "技術でつなぎ、支え、未来を創る（記述）",
+        scenario: "「技術でつなぎ、つないだものを支え、未来を創る」というTECNESの社名に込めた想いについて、あなた自身の言葉で感じたこと・大切にしたいことを書いてください。"
+      }
+    ]
+  },
+
+  // ── 理念浸透度テスト 事務職版 ──────────────────────────
+  philosophy_jimu_nendo: {
+    title: "理念浸透度確認テスト（事務職版）",
+    color: "green",
+    tag: "理念浸透度テスト",
+    questions: [
+      {
+        num: 1, tag: "バリュー：技術力×品質",
+        text: "事務の品質 ── 正確さが信頼をつくる",
+        scenario: "事務職における「品質」とは何か。最もTECNESらしい考え方はどれですか？",
+        choices: {
+          A: "処理速度を最優先し、多くの業務をこなすこと。",
+          B: "上司に指示された通りに動くこと。",
+          C: "指摘される前に自分で気づいて修正できること。",
+          D: "正確で丁寧な書類・対応が、現場やお客様への信頼の基盤をつくるということ。"
+        }
+      },
+      {
+        num: 2, tag: "バリュー：安全力×安心",
+        text: "事務のミスゼロへの意識",
+        scenario: "事務職の「安全力」に相当するものとして、最も適切な説明はどれですか？",
+        choices: {
+          A: "ミスをしたとき、すぐに謝罪できること。",
+          B: "ミスが発生しないよう確認を徹底し、問題の芽を未然に摘む意識と行動。",
+          C: "作業を効率よくこなし、時間を無駄にしないこと。",
+          D: "ミスが出ても上司がカバーしてくれる環境を整えること。"
+        }
+      },
+      {
+        num: 3, tag: "バリュー：組織力×信頼",
+        text: "縁の下の組織力 ── 現場を支える連携",
+        scenario: "現場社員が円滑に動くために、事務職が組織力を発揮するとはどういうことですか？",
+        choices: {
+          A: "現場の指示をそのまま受け付け、余計な判断をしないこと。",
+          B: "現場の状況を先読みして必要な情報・書類を先に準備し、相手が困る前に動くこと。",
+          C: "正確な書類を期限通りに出せばそれ以上のことは不要。",
+          D: "事務は事務の仕事だけをすることで組織が機能する。"
+        }
+      },
+      {
+        num: 4, tag: "バリュー：人間力×喜び",
+        text: "事務の人間力 ── 先回りの気配り",
+        scenario: "事務職における「人間力」の発揮として、最もTECNESの価値観に近いのはどれですか？",
+        choices: {
+          A: "社内の人間関係を円滑に保つため、誰とでも仲良くすること。",
+          B: "自分の仕事の範囲を守り、余計なことをしないこと。",
+          C: "他部署の社員が困っている状況にいち早く気づき、声をかけてサポートすること。",
+          D: "問題が起きたときに迅速に対応できること。"
+        }
+      },
+      {
+        num: 5, tag: "モットー：お客様に喜ばれているか",
+        text: "事務職がお客様の喜びに貢献するとは",
+        scenario: "直接お客様と接しない事務職が「お客様に喜んでもらえているか」を意識するとはどういうことですか？",
+        choices: {
+          A: "お客様対応は営業や現場の仕事であり、事務職には関係ない。",
+          B: "請求書やメール対応など、自分の仕事のすべてがお客様の体験に影響すると意識すること。",
+          C: "笑顔で電話に出ること。",
+          D: "お客様からのクレームが来たときだけ対応すればよい。"
+        }
+      },
+      {
+        num: 6, tag: "モットー：また選んでもらえるか",
+        text: "また選ばれる会社を支える事務の役割",
+        scenario: "「お客様にまた選んでもらえる」ために、事務職として最も大切なことは何ですか？",
+        choices: {
+          A: "コストを削減して会社の利益に貢献すること。",
+          B: "社内の手続きを効率化して現場の手間を省くこと。",
+          C: "書類・連絡・対応の質と誠実さが会社全体の信頼をつくり、それが再選択につながると理解して行動すること。",
+          D: "お客様に対して積極的にサービス案内をすること。"
+        }
+      },
+      {
+        num: 7, tag: "ミッション：技術・安全・絆",
+        text: "絆をつなぐ ── 社内外の信頼関係",
+        scenario: "事務職が「絆」を体現するとはどういうことですか？",
+        choices: {
+          A: "社内の飲み会や親睦行事に積極的に参加すること。",
+          B: "現場・営業・お客様・協力会社との情報をつなぎ、信頼関係の橋渡しをする役割を担うこと。",
+          C: "自分の担当業務だけに集中し、他部署に関わらないこと。",
+          D: "ミスなく仕事をこなし、摩擦を生まないこと。"
+        }
+      },
+      {
+        num: 8, tag: "理念：笑顔溢れる社会を実現する",
+        text: "理念を事務の現場で体現する",
+        scenario: "「笑顔溢れる社会を実現する」という理念を、事務職として体現している瞬間として最も近いものはどれですか？",
+        choices: {
+          A: "大きなプロジェクトに関わることができたとき。",
+          B: "書類整理が効率よくできたとき。",
+          C: "残業をせず定時に帰れたとき。",
+          D: "自分の丁寧な対応で、現場社員や取引先から「助かった」と言ってもらえたとき。"
+        }
+      },
+      {
+        num: 9, tag: "記述：理念", type: "text",
+        text: "自分の業務がTECNESの未来につながる実感（記述）",
+        scenario: "日々の事務業務の中で「これがTECNESの未来につながっている」と感じた瞬間や場面があれば書いてください。まだそのような経験がない場合は、今後どのようにつながりを感じていきたいかを書いてください。"
+      },
+      {
+        num: 10, tag: "記述：社名の想い", type: "text",
+        text: "支える存在としての誇りと使命（記述）",
+        scenario: "「暮らしや産業を支える存在」というTECNESの社名の想いを踏まえ、事務職として「支える」ことへの誇りや使命感について、自分の言葉で書いてください。"
+      }
+    ]
+  }
+};
+
+// カテゴリとテスト種別のマッピング
+const CATEGORY_TEST_MAP = {
+  "管理職": { action: "action_kanri",  philosophy: "philosophy_genba" },
+  "中堅":   { action: "action_chuken", philosophy: "philosophy_genba" },
+  "若手":   { action: "action_wakate", philosophy: "philosophy_genba" },
+  "事務職": { action: "action_jimu",   philosophy: "philosophy_jimu_nendo" }
+};
+
+// ============================================================
+// アプリ状態管理
+// ============================================================
+let appState = {
+  token: "",
+  category: "",
+  empName: "",
+  deadline: "",
+  actionSubmittedAt: null,
+  philoSubmittedAt: null,
+  currentTest: null,   // "action" or "philosophy"
+  answers: {},         // { action: [...], philosophy: [...] }
+};
+
+// ============================================================
+// 初期化
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  const cat = params.get("cat");
+
+  if (!token) {
+    showError("URLが正しくありません。メールのリンクから開き直してください。");
+    return;
+  }
+
+  appState.token = token;
+  appState.category = decodeURIComponent(cat || "");
+
+  validateToken(token);
+});
+
+async function validateToken(token) {
+  try {
+    // GASのdoGet APIでトークンを検証
+    const res = await fetch(`${GAS_URL}?token=${token}`, { method: "GET" });
+    const data = await res.json();
+
+    if (!data.valid) {
+      showError(data.error || "URLが無効か、受験期限が過ぎています。");
+      return;
+    }
+
+    appState.empName = data.name;
+    appState.category = data.category;
+    appState.deadline = data.deadline;
+    appState.actionSubmittedAt = data.actionSubmittedAt;
+    appState.philoSubmittedAt = data.philoSubmittedAt;
+
+    showWelcome();
+
+  } catch (e) {
+    // 開発・デモ用：GAS未設定の場合はデモモードで動作
+    console.warn("GAS接続なし - デモモードで動作します");
+    appState.empName = "デモユーザー";
+    appState.category = appState.category || "中堅";
+    appState.deadline = "2099/12/31";
+    showWelcome();
+  }
+}
+
+// ============================================================
+// 画面制御
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add("active");
+    window.scrollTo(0, 0);
+  }
+}
+
+function showError(msg) {
+  document.getElementById("error-message").textContent = msg;
+  showScreen("screen-error");
+}
+
+function showWelcome() {
+  document.getElementById("welcome-name").textContent = `${appState.empName} さん`;
+  document.getElementById("deadline-display").textContent = appState.deadline;
+
+  const cat = appState.category;
+  const testMap = CATEGORY_TEST_MAP[cat] || CATEGORY_TEST_MAP["中堅"];
+  const actionTestData = TEST_DATA[testMap.action];
+  const philoTestData = TEST_DATA[testMap.philosophy];
+
+  const actionDone = !!appState.actionSubmittedAt;
+  const philoDone = !!appState.philoSubmittedAt;
+
+  // テストセット表示
+  const listEl = document.getElementById("test-set-list");
+  listEl.innerHTML = `
+    <div class="test-badge action ${actionDone ? 'done' : ''}">
+      <div class="test-badge-num">①</div>
+      <div class="test-badge-info">
+        <div class="test-badge-name">${actionTestData.title}</div>
+        <div class="test-badge-detail">択一8問 ＋ 記述2問｜目安25〜30分</div>
+      </div>
+      <div class="test-badge-status ${actionDone ? 'status-done' : 'status-pending'}">
+        ${actionDone ? '✅完了' : '未受験'}
+      </div>
+    </div>
+    <div class="test-badge philosophy ${philoDone ? 'done' : ''}">
+      <div class="test-badge-num">②</div>
+      <div class="test-badge-info">
+        <div class="test-badge-name">${philoTestData.title}</div>
+        <div class="test-badge-detail">択一8問 ＋ 記述2問｜目安25〜30分</div>
+      </div>
+      <div class="test-badge-status ${philoDone ? 'status-done' : 'status-pending'}">
+        ${philoDone ? '✅完了' : '未受験'}
+      </div>
+    </div>
+  `;
+
+  // スタートボタン
+  const startBtn = document.getElementById("btn-start-action");
+  if (actionDone && philoDone) {
+    startBtn.textContent = "すべての受験が完了しています";
+    startBtn.disabled = true;
+    startBtn.onclick = null;
+  } else if (actionDone) {
+    startBtn.textContent = "② 理念浸透度テストを開始する";
+    startBtn.className = "btn btn-green";
+    startBtn.onclick = () => startTest("philosophy");
+  } else {
+    startBtn.textContent = "① 行動確認テストを開始する";
+    startBtn.className = "btn btn-navy";
+    startBtn.onclick = () => startTest("action");
+  }
+
+  showScreen("screen-welcome");
+}
+
+// ============================================================
+// テスト開始
+// ============================================================
+function startTest(testType) {
+  appState.currentTest = testType;
+  appState.answers[testType] = new Array(10).fill("");
+
+  const cat = appState.category;
+  const testMap = CATEGORY_TEST_MAP[cat] || CATEGORY_TEST_MAP["中堅"];
+  const testKey = testMap[testType];
+  const testData = TEST_DATA[testKey];
+
+  // ヘッダー
+  const headerEl = document.getElementById("test-header-block");
+  const color = testData.color;
+  headerEl.className = `test-header ${color}`;
+  document.getElementById("test-title-display").textContent = testData.title;
+  document.getElementById("test-meta-display").textContent =
+    `${appState.empName} さん｜択一8問 ＋ 記述2問`;
+
+  // ステップインジケーター
+  document.getElementById("step1").className = `step-dot ${testType === "action" ? `active ${color}` : "done"}`;
+  document.getElementById("step2").className = `step-dot ${testType === "philosophy" ? `active ${color}` : ""}`;
+
+  // プログレスバー
+  const fillEl = document.getElementById("progress-fill");
+  fillEl.className = `progress-fill ${color}`;
+  document.getElementById("progress-text").textContent = "進捗";
+  document.getElementById("progress-pct").textContent = "0%";
+  fillEl.style.width = "0%";
+
+  // 設問レンダリング
+  renderQuestions(testData, color);
+
+  // 送信ボタン
+  const submitBtn = document.getElementById("btn-submit-test");
+  submitBtn.className = `btn btn-${color}`;
+
+  showScreen("screen-test");
+  setupProgressTracking(testType);
+}
+
+function renderQuestions(testData, color) {
+  const container = document.getElementById("questions-container");
+  container.innerHTML = "";
+
+  testData.questions.forEach((q, idx) => {
+    const isText = q.type === "text";
+    const divider = idx === 7 ? `<div class="section-divider">── 記述問題 ──</div>` : "";
+
+    let innerHTML = `
+      ${divider}
+      <div class="question-block" id="q-block-${idx}">
+        <span class="question-tag ${color}">${q.tag}</span>
+        <div class="question-num">問 ${q.num}</div>
+        <div class="question-text">${q.text}</div>
+        <div class="question-scenario">${q.scenario}</div>
+    `;
+
+    if (isText) {
+      innerHTML += `
+        <div class="textarea-wrap">
+          <textarea
+            class="question-textarea ${color}"
+            id="answer-${idx}"
+            placeholder="こちらに回答を記入してください（100〜300字程度）"
+            maxlength="500"
+            oninput="onTextareaInput(${idx}, this)"
+          ></textarea>
+          <div class="char-count"><span id="char-count-${idx}">0</span> / 500文字</div>
+        </div>
+        <div class="validate-error" id="error-${idx}">回答を入力してください。</div>
+      `;
+    } else {
+      const keys = ["A", "B", "C", "D"];
+      innerHTML += `<div class="choices">`;
+      keys.forEach(key => {
+        innerHTML += `
+          <label class="choice-label" id="choice-${idx}-${key}" onclick="selectChoice(${idx}, '${key}', '${color}')">
+            <input type="radio" name="q${idx}" value="${key}">
+            <span class="choice-key">${key}</span>
+            <span>${q.choices[key]}</span>
+          </label>
+        `;
+      });
+      innerHTML += `</div><div class="validate-error" id="error-${idx}">選択肢を選んでください。</div>`;
+    }
+
+    innerHTML += `</div>`;
+    container.insertAdjacentHTML("beforeend", innerHTML);
+  });
+}
+
+// ============================================================
+// 回答操作
+// ============================================================
+function selectChoice(qIdx, key, color) {
+  const testType = appState.currentTest;
+  appState.answers[testType][qIdx] = key;
+
+  // UI更新
+  ["A", "B", "C", "D"].forEach(k => {
+    const el = document.getElementById(`choice-${qIdx}-${k}`);
+    if (el) el.className = `choice-label${k === key ? ` selected ${color}` : ""}`;
+  });
+
+  // エラー非表示
+  const errEl = document.getElementById(`error-${qIdx}`);
+  if (errEl) errEl.classList.remove("show");
+
+  updateProgress();
+}
+
+function onTextareaInput(qIdx, el) {
+  const testType = appState.currentTest;
+  appState.answers[testType][qIdx] = el.value;
+  document.getElementById(`char-count-${qIdx}`).textContent = el.value.length;
+
+  const errEl = document.getElementById(`error-${qIdx}`);
+  if (errEl && el.value.trim()) errEl.classList.remove("show");
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const testType = appState.currentTest;
+  const answers = appState.answers[testType];
+  const filled = answers.filter(a => a && a.trim()).length;
+  const pct = Math.round((filled / 10) * 100);
+  document.getElementById("progress-pct").textContent = `${pct}%`;
+  document.getElementById("progress-fill").style.width = `${pct}%`;
+  document.getElementById("progress-text").textContent = `${filled} / 10問 回答済み`;
+}
+
+function setupProgressTracking(testType) {
+  // テキストエリアの入力も監視
+  for (let i = 8; i < 10; i++) {
+    const el = document.getElementById(`answer-${i}`);
+    if (el) el.addEventListener("input", updateProgress);
+  }
+}
+
+// ============================================================
+// バリデーション・確認画面
+// ============================================================
+function submitTestForm() {
+  const testType = appState.currentTest;
+  const answers = appState.answers[testType];
+  const cat = appState.category;
+  const testMap = CATEGORY_TEST_MAP[cat] || CATEGORY_TEST_MAP["中堅"];
+  const testKey = testMap[testType];
+  const testData = TEST_DATA[testKey];
+  const color = testData.color;
+
+  let valid = true;
+
+  for (let i = 0; i < 10; i++) {
+    const q = testData.questions[i];
+    const errEl = document.getElementById(`error-${i}`);
+    if (!answers[i] || !answers[i].trim()) {
+      if (errEl) errEl.classList.add("show");
+      if (valid) {
+        document.getElementById(`q-block-${i}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      valid = false;
+    } else {
+      if (errEl) errEl.classList.remove("show");
+    }
+  }
+
+  if (!valid) return;
+
+  // 確認画面を生成
+  renderConfirmScreen(testData, answers, color);
+  showScreen("screen-confirm");
+}
+
+function renderConfirmScreen(testData, answers, color) {
+  document.getElementById("confirm-title").textContent = `「${testData.title}」回答内容の確認`;
+  document.getElementById("btn-send").className = `btn btn-${color}`;
+
+  const content = document.getElementById("confirm-content");
+  let html = `<table class="confirm-table">`;
+
+  testData.questions.forEach((q, i) => {
+    const isText = q.type === "text";
+    const answerDisplay = isText
+      ? `<span style="font-size:13px;">${answers[i].replace(/\n/g, "<br>")}</span>`
+      : `<span class="answer-chip ${color}">${answers[i]}</span>`;
+
+    html += `
+      <tr>
+        <th>問 ${q.num}</th>
+        <td>${answerDisplay}</td>
+      </tr>
+    `;
+  });
+
+  html += `</table>`;
+  content.innerHTML = html;
+}
+
+function backToTest() {
+  showScreen("screen-test");
+
+  // 入力済みの回答を復元
+  const testType = appState.currentTest;
+  const answers = appState.answers[testType];
+  const cat = appState.category;
+  const testMap = CATEGORY_TEST_MAP[cat] || CATEGORY_TEST_MAP["中堅"];
+  const testKey = testMap[testType];
+  const testData = TEST_DATA[testKey];
+  const color = testData.color;
+
+  for (let i = 0; i < 10; i++) {
+    const q = testData.questions[i];
+    if (q.type === "text") {
+      const el = document.getElementById(`answer-${i}`);
+      if (el) el.value = answers[i] || "";
+    } else {
+      if (answers[i]) {
+        selectChoice(i, answers[i], color);
+      }
+    }
+  }
+  updateProgress();
+}
+
+// ============================================================
+// 送信
+// ============================================================
+async function sendAnswers() {
+  const testType = appState.currentTest;
+  const answers = appState.answers[testType];
+  const btn = document.getElementById("btn-send");
+  btn.disabled = true;
+  btn.textContent = "送信中...";
+
+  const payload = {
+    token: appState.token,
+    testType: testType,
+    answers: answers,
+    submittedAt: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(`送信エラー：${data.error}`);
+      btn.disabled = false;
+      btn.textContent = "送信する";
+      return;
+    }
+  } catch (e) {
+    // GAS未接続の場合はデモ送信として処理
+    console.warn("GAS未接続 - デモ送信として処理");
+  }
+
+  // 送信後の遷移
+  if (testType === "action") {
+    appState.actionSubmittedAt = new Date().toISOString();
+    document.getElementById("half-done-title").textContent =
+      `「${TEST_DATA[CATEGORY_TEST_MAP[appState.category]?.action || "action_chuken"].title}」が完了しました`;
+    showScreen("screen-half-done");
+  } else {
+    appState.philoSubmittedAt = new Date().toISOString();
+    showScreen("screen-complete");
+  }
+}
+</script>
+</body>
+</html>
