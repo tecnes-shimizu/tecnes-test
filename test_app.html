@@ -1278,7 +1278,7 @@ let appState = {
 document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
-  const cat = params.get("cat");
+  const cat = decodeURIComponent(params.get("cat") || "");
 
   if (!token) {
     showError("URLが正しくありません。メールのリンクから開き直してください。");
@@ -1286,19 +1286,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   appState.token = token;
-  appState.category = decodeURIComponent(cat || "");
+  appState.category = cat;
 
-  // URLパラメータからカテゴリを取得してすぐに画面表示
-  const cat = decodeURIComponent(params.get("cat") || "");
+  // URLパラメータのカテゴリをチェック
   if (!cat || !CATEGORY_TEST_MAP[cat]) {
-    showScreen("screen-error");
-    document.getElementById("error-message").textContent = "URLが正しくありません。メールのリンクから開き直してください。";
+    showError("URLが正しくありません。メールのリンクから開き直してください。");
     return;
   }
 
   // すぐにウェルカム画面を表示（GAS認証は裏で実行）
   appState.empName = "受験者";
-  appState.category = cat;
   appState.deadline = "－";
   showWelcome();
 
