@@ -1279,6 +1279,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
   const cat = decodeURIComponent(params.get("cat") || "");
+  const name = decodeURIComponent(params.get("name") || "");
 
   if (!token) {
     showError("URLが正しくありません。メールのリンクから開き直してください。");
@@ -1294,12 +1295,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // すぐにウェルカム画面を表示（GAS認証は裏で実行）
-  appState.empName = "受験者";
+  // URLから取得した名前をすぐに表示（GAS通信不要）
+  appState.empName = name || "受験者";
   appState.deadline = "－";
   showWelcome();
 
-  // 裏でGAS認証（名前・期限の取得のみ）
+  // 裏でGAS認証（受験状況・期限の取得のみ）
   fetchEmployeeInfo(token, cat);
 });
 
@@ -1315,13 +1316,14 @@ async function fetchEmployeeInfo(token, cat) {
     const text = await res.text();
     const data = JSON.parse(text);
     if (data.valid) {
-      // 名前と期限だけ更新
-      appState.empName = data.name;
+      // 名前・期限・受験状況を更新
+      if (data.name) {
+        appState.empName = data.name;
+        document.getElementById("welcome-name").textContent = `${data.name} さん`;
+      }
       appState.deadline = data.deadline;
       appState.actionSubmittedAt = data.actionSubmittedAt;
       appState.philoSubmittedAt = data.philoSubmittedAt;
-      // 画面の名前・期限表示を更新
-      document.getElementById("welcome-name").textContent = `${data.name} さん`;
       document.getElementById("deadline-display").textContent = data.deadline;
     }
   } catch (e) {
