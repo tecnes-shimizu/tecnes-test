@@ -1288,8 +1288,50 @@ document.addEventListener("DOMContentLoaded", () => {
   appState.token = token;
   appState.category = decodeURIComponent(cat || "");
 
-  validateToken(token);
+  // URLパラメータからカテゴリを取得してすぐに画面表示
+  const cat = decodeURIComponent(params.get("cat") || "");
+  if (!cat || !CATEGORY_TEST_MAP[cat]) {
+    showScreen("screen-error");
+    document.getElementById("error-message").textContent = "URLが正しくありません。メールのリンクから開き直してください。";
+    return;
+  }
+
+  // すぐにウェルカム画面を表示（GAS認証は裏で実行）
+  appState.empName = "受験者";
+  appState.category = cat;
+  appState.deadline = "－";
+  showWelcome();
+
+  // 裏でGAS認証（名前・期限の取得のみ）
+  fetchEmployeeInfo(token, cat);
 });
+
+async function fetchEmployeeInfo(token, cat) {
+  try {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${GAS_URL}?token=${encodeURIComponent(token)}`, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal
+    });
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if (data.valid) {
+      // 名前と期限だけ更新
+      appState.empName = data.name;
+      appState.deadline = data.deadline;
+      appState.actionSubmittedAt = data.actionSubmittedAt;
+      appState.philoSubmittedAt = data.philoSubmittedAt;
+      // 画面の名前・期限表示を更新
+      document.getElementById("welcome-name").textContent = `${data.name} さん`;
+      document.getElementById("deadline-display").textContent = data.deadline;
+    }
+  } catch (e) {
+    // タイムアウト・エラーは無視（画面はすでに表示済み）
+    console.warn("GAS認証スキップ:", e.message);
+  }
+}
 
 async function validateToken(token) {
   // タイムアウト付きfetch（5秒）
