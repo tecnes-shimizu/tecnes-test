@@ -600,7 +600,7 @@
 // ============================================================
 // 設定
 // ============================================================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz_vAA3EqjhKrwLz_IP3KAv08JZBAZb9MNoMYV3cEuvSalYt9kjr_lZMogytYHtByXFng/exec"; // ← GASをデプロイ後に設定
+const GAS_URL = "YOUR_GAS_WEBAPP_URL"; // ← GASをデプロイ後に設定
 
 // ============================================================
 // テストデータ（全6テスト）
@@ -1293,9 +1293,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function validateToken(token) {
   try {
-    // GASのdoGet APIでトークンを検証
-    const res = await fetch(`${GAS_URL}?token=${token}`, { method: "GET" });
-    const data = await res.json();
+    // GASのdoGet APIでトークンを検証（no-corsを避けるためGASのリダイレクト対応）
+    const res = await fetch(`${GAS_URL}?token=${encodeURIComponent(token)}`, {
+      method: "GET",
+      redirect: "follow"
+    });
+    const text = await res.text();
+    const data = JSON.parse(text);
 
     if (!data.valid) {
       showError(data.error || "URLが無効か、受験期限が過ぎています。");
@@ -1311,12 +1315,8 @@ async function validateToken(token) {
     showWelcome();
 
   } catch (e) {
-    // 開発・デモ用：GAS未設定の場合はデモモードで動作
-    console.warn("GAS接続なし - デモモードで動作します");
-    appState.empName = "デモユーザー";
-    appState.category = appState.category || "中堅";
-    appState.deadline = "2099/12/31";
-    showWelcome();
+    console.error("GAS接続エラー:", e);
+    showError("接続エラーが発生しました。時間をおいて再度お試しください。");
   }
 }
 
@@ -1639,22 +1639,20 @@ async function sendAnswers() {
   };
 
   try {
-    const res = await fetch(GAS_URL, {
+    // GASへno-corsで送信（CORSエラー回避）
+    await fetch(GAS_URL, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
-
-    if (!data.success) {
-      alert(`送信エラー：${data.error}`);
-      btn.disabled = false;
-      btn.textContent = "送信する";
-      return;
-    }
+    // no-corsではレスポンスが読めないため、送信完了として処理
   } catch (e) {
-    // GAS未接続の場合はデモ送信として処理
-    console.warn("GAS未接続 - デモ送信として処理");
+    console.error("送信エラー:", e);
+    alert("送信中にエラーが発生しました。もう一度お試しください。");
+    btn.disabled = false;
+    btn.textContent = "送信する";
+    return;
   }
 
   // 送信後の遷移
