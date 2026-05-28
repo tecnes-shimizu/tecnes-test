@@ -600,7 +600,7 @@
 // ============================================================
 // 設定
 // ============================================================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz_vAA3EqjhKrwLz_IP3KAv08JZBAZb9MNoMYV3cEuvSalYt9kjr_lZMogytYHtByXFng/exec"; // ← GASをデプロイ後に設定
+const GAS_URL = "YOUR_GAS_WEBAPP_URL"; // ← GASをデプロイ後に設定
 
 // ============================================================
 // テストデータ（全6テスト）
@@ -1292,12 +1292,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function validateToken(token) {
+  // タイムアウト付きfetch（5秒）
+  const fetchWithTimeout = (url, options, timeout = 5000) => {
+    return Promise.race([
+      fetch(url, options),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeout))
+    ]);
+  };
+
   try {
-    // GASのdoGet APIでトークンを検証（no-corsを避けるためGASのリダイレクト対応）
-    const res = await fetch(`${GAS_URL}?token=${encodeURIComponent(token)}`, {
-      method: "GET",
-      redirect: "follow"
-    });
+    const res = await fetchWithTimeout(
+      `${GAS_URL}?token=${encodeURIComponent(token)}`,
+      { method: "GET", redirect: "follow" },
+      5000
+    );
     const text = await res.text();
     const data = JSON.parse(text);
 
@@ -1311,12 +1319,21 @@ async function validateToken(token) {
     appState.deadline = data.deadline;
     appState.actionSubmittedAt = data.actionSubmittedAt;
     appState.philoSubmittedAt = data.philoSubmittedAt;
-
     showWelcome();
 
   } catch (e) {
-    console.error("GAS接続エラー:", e);
-    showError("接続エラーが発生しました。時間をおいて再度お試しください。");
+    // タイムアウトまたは接続エラーの場合はURLパラメータから情報を取得して進む
+    console.warn("GAS接続タイムアウト - URLパラメータで進みます");
+    const params = new URLSearchParams(window.location.search);
+    const cat = decodeURIComponent(params.get("cat") || "");
+    if (!cat || !CATEGORY_TEST_MAP[cat]) {
+      showError("URLが正しくありません。メールのリンクから開き直してください。");
+      return;
+    }
+    appState.empName = "受験者";
+    appState.category = cat;
+    appState.deadline = "－";
+    showWelcome();
   }
 }
 
