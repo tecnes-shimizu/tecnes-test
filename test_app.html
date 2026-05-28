@@ -1630,7 +1630,10 @@ function submitTestForm() {
 
 function renderConfirmScreen(testData, answers, color) {
   document.getElementById("confirm-title").textContent = `「${testData.title}」回答内容の確認`;
-  document.getElementById("btn-send").className = `btn btn-${color}`;
+  const sendBtn = document.getElementById("btn-send");
+  sendBtn.className = `btn btn-${color}`;
+  sendBtn.disabled = false;
+  sendBtn.textContent = "送信する";
 
   const content = document.getElementById("confirm-content");
   let html = `<table class="confirm-table">`;
@@ -1654,6 +1657,13 @@ function renderConfirmScreen(testData, answers, color) {
 }
 
 function backToTest() {
+  // 送信ボタンをリセット
+  const sendBtn = document.getElementById("btn-send");
+  if (sendBtn) {
+    sendBtn.disabled = false;
+    sendBtn.textContent = "送信する";
+  }
+
   showScreen("screen-test");
 
   // 入力済みの回答を復元
