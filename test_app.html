@@ -1325,10 +1325,68 @@ async function fetchEmployeeInfo(token, cat) {
       appState.actionSubmittedAt = data.actionSubmittedAt;
       appState.philoSubmittedAt = data.philoSubmittedAt;
       document.getElementById("deadline-display").textContent = data.deadline;
+
+      // 受験状況に応じてスタートボタンを更新
+      updateStartButton();
     }
   } catch (e) {
-    // タイムアウト・エラーは無視（画面はすでに表示済み）
     console.warn("GAS認証スキップ:", e.message);
+  }
+}
+
+function updateStartButton() {
+  const actionDone = !!appState.actionSubmittedAt;
+  const philoDone = !!appState.philoSubmittedAt;
+  const startBtn = document.getElementById("btn-start-action");
+  if (!startBtn) return;
+
+  // テストセットの受験状況バッジも更新
+  const cat = appState.category;
+  const testMap = CATEGORY_TEST_MAP[cat] || CATEGORY_TEST_MAP["中堅"];
+  const actionTestData = TEST_DATA[testMap.action];
+  const philoTestData = TEST_DATA[testMap.philosophy];
+
+  const listEl = document.getElementById("test-set-list");
+  if (listEl) {
+    listEl.innerHTML = `
+      <div class="test-badge action ${actionDone ? 'done' : ''}">
+        <div class="test-badge-num">①</div>
+        <div class="test-badge-info">
+          <div class="test-badge-name">${actionTestData.title}</div>
+          <div class="test-badge-detail">択一8問 ＋ 記述2問｜目安25〜30分</div>
+        </div>
+        <div class="test-badge-status ${actionDone ? 'status-done' : 'status-pending'}">
+          ${actionDone ? '✅完了' : '未受験'}
+        </div>
+      </div>
+      <div class="test-badge philosophy ${philoDone ? 'done' : ''}">
+        <div class="test-badge-num">②</div>
+        <div class="test-badge-info">
+          <div class="test-badge-name">${philoTestData.title}</div>
+          <div class="test-badge-detail">択一8問 ＋ 記述2問｜目安25〜30分</div>
+        </div>
+        <div class="test-badge-status ${philoDone ? 'status-done' : 'status-pending'}">
+          ${philoDone ? '✅完了' : '未受験'}
+        </div>
+      </div>
+    `;
+  }
+
+  if (actionDone && philoDone) {
+    startBtn.textContent = "すべての受験が完了しています";
+    startBtn.disabled = true;
+    startBtn.onclick = null;
+    startBtn.className = "btn btn-navy";
+  } else if (actionDone) {
+    startBtn.textContent = "② 理念浸透度テストを開始する";
+    startBtn.className = "btn btn-green";
+    startBtn.disabled = false;
+    startBtn.onclick = () => startTest("philosophy");
+  } else {
+    startBtn.textContent = "① 行動確認テストを開始する";
+    startBtn.className = "btn btn-navy";
+    startBtn.disabled = false;
+    startBtn.onclick = () => startTest("action");
   }
 }
 
